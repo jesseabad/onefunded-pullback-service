@@ -794,33 +794,119 @@ def analyze_pair(instrument):
     result["record"] = record
     return result
 
+# ============================================================
+# CONSOLE DISPLAY
+# ============================================================
+
+RESET   = "\033[0m"
+GRAY    = "\033[90m"
+BLUE    = "\033[94m"
+YELLOW  = "\033[93m"
+ORANGE  = "\033[38;5;208m"
+MAGENTA = "\033[95m"
+GREEN   = "\033[92m"
+RED     = "\033[91m"
+BOLD    = "\033[1m"
+
+
+STATE_COLORS = {
+    "CONFIRMED": BOLD + GREEN,
+    "WAIT_CONFIRMATION": MAGENTA,
+    "PULLBACK": YELLOW,
+    "TREND": BLUE,
+    "EXTENDED": GRAY,
+    "INVALIDATED": RED,
+    "NO_VALID_IMPULSE": BLUE,
+    "NO_PULLBACK_DATA": BLUE,
+    "ERROR": BOLD + RED,
+}
+
+
+STATE_PRIORITY = {
+    "CONFIRMED": 0,
+    "WAIT_CONFIRMATION": 1,
+    "PULLBACK": 2,
+    "TREND": 3,
+    "EXTENDED": 4,
+    "NO_VALID_IMPULSE": 5,
+    "NO_PULLBACK_DATA": 6,
+    "INVALIDATED": 7,
+    "ERROR": 8,
+    "TREND_DISAGREE": 9,
+    "NO_TREND": 10,
+    "NO_DATA": 11,
+}
+
+
+def colorize_scan_row(text, state):
+    color = STATE_COLORS.get(state, "")
+
+    if not color:
+        return text
+
+    return f"{color}{text}{RESET}"
+
+
 
 def print_scan(results):
+
+    # Most actionable setups first; IGNORE / NO_TREND last.
+    sorted_results = sorted(
+        results,
+        key=lambda r: (
+            STATE_PRIORITY.get(r.get("state", ""), 99),
+            r.get("pair", "")
+        )
+    )
+
     print("\n" + "=" * 88)
     print(f"OneFunded Pullback Service | {datetime.now(timezone.utc).isoformat()}")
     print("=" * 88)
-    print(f"{'PAIR':<10} {'TREND':<8} {'STATE':<22} {'PB ATR':>8} {'RETRACE':>9}  ACTION")
+
+    print(
+        f"{'PAIR':<10} "
+        f"{'TREND':<8} "
+        f"{'STATE':<22} "
+        f"{'PB ATR':>8} "
+        f"{'RETRACE':>9}  "
+        f"ACTION"
+    )
+
     print("-" * 88)
 
-    for r in results:
-        print(
+    for r in sorted_results:
+
+        state = r.get("state", "--")
+
+        row = (
             f"{r['pair']:<10} "
             f"{str(r.get('trend', '--')):<8} "
-            f"{r.get('state', '--'):<22} "
+            f"{state:<22} "
             f"{fmt(r.get('pullback_atr')):>8} "
             f"{(fmt(r.get('retrace_pct')) + '%') if r.get('retrace_pct') is not None else '--':>9}  "
             f"{r.get('action', '--')}"
         )
 
-        if r.get("state") == "CONFIRMED":
+        print(colorize_scan_row(row, state))
+
+        if state == "CONFIRMED":
             x = r["record"]
-            print(
-                f"  -> {x['direction']} | {x['confirmation_type']} | "
-                f"Entry {x['entry']} | SL {x['final_sl']} "
-                f"({x['sl_pips']:.1f} pips) | Risk ${x['risk_cad']:.2f} | "
-                f"Units {x['units']} | Lots {x['lots']:.3f} | "
-                f"TP: 1.5R {x['tp_1_5r']} / 1.75R {x['tp_1_75r']} / 2R {x['tp_2r']}"
+
+            detail = (
+                f"  -> {x['direction']} | "
+                f"{x['confirmation_type']} | "
+                f"Entry {x['entry']} | "
+                f"SL {x['final_sl']} "
+                f"({x['sl_pips']:.1f} pips) | "
+                f"Risk ${x['risk_cad']:.2f} | "
+                f"Units {x['units']} | "
+                f"Lots {x['lots']:.3f} | "
+                f"TP: 1.5R {x['tp_1_5r']} / "
+                f"1.75R {x['tp_1_75r']} / "
+                f"2R {x['tp_2r']}"
             )
+
+            print(f"{BOLD}{GREEN}{detail}{RESET}")
 
 
 def scan_once():
