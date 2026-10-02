@@ -634,7 +634,10 @@ def init_google_sheet():
 
     existing_header = GSHEET_TAB.row_values(1)
     if existing_header != GSHEET_COLUMNS:
-        GSHEET_TAB.update("A1", [GSHEET_COLUMNS])
+        GSHEET_TAB.update(
+            range_name="A1",
+            values=[GSHEET_COLUMNS]
+        )
 
     # Load prior IDs so restart/redeploy does not duplicate confirmed setups.
     try:
