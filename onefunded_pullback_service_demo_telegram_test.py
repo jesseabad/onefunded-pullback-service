@@ -81,6 +81,9 @@ MAX_OPEN_TRADES = int(os.environ.get("PULLBACK_MAX_OPEN_TRADES", "1"))
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 TELEGRAM_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+TELEGRAM_TEST_ON_START = os.environ.get(
+    "PULLBACK_TELEGRAM_TEST_ON_START", "false"
+).lower() in ("1", "true", "yes", "on")
 
 # Hard safety lock.
 if DEMO_TRADING_ENABLED and ACCOUNT_MODE != "DEMO":
@@ -224,6 +227,33 @@ def send_telegram(message):
     except Exception as e:
         print(f"[TELEGRAM ERROR] {e}")
         return False
+
+
+
+def send_telegram_startup_test():
+    """Safe Telegram-only startup test. This function never submits an OANDA order."""
+    if not TELEGRAM_TEST_ON_START:
+        return
+
+    if not TELEGRAM_ENABLED:
+        print("[TELEGRAM TEST] SKIPPED - bot token/chat ID not configured")
+        return
+
+    execution_status = "ON" if DEMO_TRADING_ENABLED else "OFF"
+    message = (
+        "OneFunded Pullback Service - TEST\n\n"
+        "Telegram connection successful.\n"
+        f"OANDA mode: {ACCOUNT_MODE}\n"
+        f"Demo trading: {execution_status}\n"
+        f"Risk plan: CAD ${RISK_CAD:.2f} max\n"
+        f"TP target: {DEMO_TP_RR:.2f}R\n\n"
+        "This is a notification test only. No trade was placed."
+    )
+
+    if send_telegram(message):
+        print("[TELEGRAM TEST] SENT SUCCESSFULLY")
+    else:
+        print("[TELEGRAM TEST] FAILED")
 
 
 def telegram_trade_message(record, execution):
@@ -1184,6 +1214,9 @@ def run():
     else:
         print("Execution: OFF (analysis/logging only)")
         print(f"Telegram: {'READY' if TELEGRAM_ENABLED else 'NOT CONFIGURED'}")
+
+    # Optional Telegram-only connectivity test. Cannot place an OANDA order.
+    send_telegram_startup_test()
 
     if GSHEET_LOG_ENABLED:
         try:
