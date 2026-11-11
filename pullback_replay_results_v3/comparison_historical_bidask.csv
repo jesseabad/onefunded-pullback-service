@@ -1,0 +1,10 @@
+trades,wins,win_rate,net_r,expectancy_r,max_drawdown_r,variant,period,cost_model,commission_roundtrip_pips
+1442,507,35.16,-181.492,-0.1259,198.659,original,all,historical_bid_ask,0.0
+1037,377,36.35,-97.905,-0.0944,117.575,original,in_sample,historical_bid_ask,0.0
+405,130,32.1,-83.587,-0.2064,96.343,original,out_of_sample,historical_bid_ask,0.0
+661,248,37.52,-47.653,-0.0721,73.078,max_retrace,all,historical_bid_ask,0.0
+463,178,38.44,-23.789,-0.0514,52.713,max_retrace,in_sample,historical_bid_ask,0.0
+198,70,35.35,-23.864,-0.1205,31.364,max_retrace,out_of_sample,historical_bid_ask,0.0
+1187,436,36.73,-102.158,-0.0861,113.419,strict_original_filter,all,historical_bid_ask,0.0
+849,306,36.04,-87.084,-0.1026,96.962,strict_original_filter,in_sample,historical_bid_ask,0.0
+338,130,38.46,-15.073,-0.0446,29.431,strict_original_filter,out_of_sample,historical_bid_ask,0.0
